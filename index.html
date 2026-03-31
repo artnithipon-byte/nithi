@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <style>
 body {
     font-family:agency fb, sans-serif;
@@ -78,7 +79,16 @@ body {
     </div>
     <div class="footer-text">OVERALL OEE</div>
 </div>
-
+<div class="oee-card ava-position"> 
+    <div class="chart-container">
+        <canvas id="avaChart"></canvas>
+        <div class="center-label">
+            <span id="avaValue">0</span>
+            <div class="unit">%</div>
+        </div>
+    </div>
+    <div class="footer-text">AVAILABILITY</div>
+</div>
 <style>
     .oee-card {
         background-color: #0b1318;
@@ -121,8 +131,17 @@ body {
         letter-spacing: 2px;
         font-size: 14px;
     }
+    
 </style>
-
+<style>
+    /* เพิ่มต่อจากของเดิม */
+    .ava-position {
+        float: right;
+        /* ปรับ margin-right ให้ต่างจากอันแรก (เช่น ถ้าอันแรก 560px อันนี้อาจจะ 250px) */
+        margin-right: 250px; 
+        margin-top: -1720px; /* ให้สูงเท่ากับอันแรกที่คุณตั้งไว้ */
+    }
+</style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     let myChart;
@@ -173,6 +192,57 @@ body {
     // ทำงานทันทีเมื่อโหลดหน้า และทำซ้ำทุก 10 วินาที
     updateGauge();
     setInterval(updateGauge, 7500); 
+
+    <script>
+    // 1. สร้างตัวแปรใหม่ชื่อไม่ซ้ำเดิม
+    let myChartAVA; 
+    
+    // 2. ใช้ลิงก์ Web App (ตัวที่ดึงค่าสด)
+    const avaAppUrl = 'https://script.google.com/macros/s/AKfycbyds5ncTcYIid9-hWD-56kDVJ9_pcKlG_FcYPRxzXbTzJz9BJcMGoecZLYKCkNA1xA/exec';
+
+    async function updateAvaGauge() {
+        try {
+            // เติม ?t= เพื่อทำลาย Cache บังคับดึงค่าใหม่ล่าสุด
+            const response = await fetch(avaAppUrl + '?t=' + new Date().getTime());
+            const result = await response.json();
+            
+            // สมมติว่าใน JSON ส่งค่ามาเป็น { "ava": 0.85 }
+            let score = (parseFloat(result.oee) * 100).toFixed(1); 
+
+            // อัปเดตตัวเลขลง ID ใหม่
+            document.getElementById('avaValue').innerText = score;
+
+            if (!myChartAVA) {
+                const ctx = document.getElementById('avaChart').getContext('2d');
+                myChartAVA = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        datasets: [{
+                            data: [score, 100 - score],
+                            backgroundColor: ['#36a2eb', '#1e252d'], // สีฟ้าให้ต่างจากสีเขียวอันแรก
+                            borderWidth: 0,
+                            cutout: '88%',
+                            borderRadius: 10
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false }, tooltip: { enabled: false } }
+                    }
+                });
+            } else {
+                myChartAVA.data.datasets[0].data = [score, 100 - score];
+                myChartAVA.update('none'); // อัปเดตแบบ Real-time ทันที
+            }
+        } catch (err) {
+            console.error("AVA Error:", err);
+        }
+    }
+
+    // 3. สั่งให้ทำงานทุก 3 วินาที (เพื่อให้ Real-time)
+    updateAvaGauge();
+    setInterval(updateAvaGauge, 3000); 
+</script>
 </script>
 
 
