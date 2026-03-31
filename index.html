@@ -69,7 +69,7 @@ body {
 
 
 
-<div style="width: 200px; height: 200px;margin-left:200px;">
+<div style="width: 200px; height: 200px;margin-left:600px;margin-top:-300px;">
     
     <canvas id="myPieChart"></canvas>
 </div>
@@ -113,6 +113,82 @@ body {
     drawChart();
 </script>
 
+
+
+       <div class="oee-container" style="float: right;"> <div class="chart-box">
+        <canvas id="oeeChart"></canvas>
+        <div class="oee-center-text">
+            <p id="oeeValue" class="oee-percentage">0</p>
+            <div class="oee-symbol">%</div>
+        </div>
+    </div>
+    <div class="oee-label">OVERALL OEE</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    let myChart; // สร้างตัวแปรเก็บกราฟไว้ข้างนอกเพื่อให้อัปเดตได้
+
+    async function updateDataFromSheet() {
+        const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTsx21fhnbVJwPM0v5aaBaNZN4VCEY79e82SYbb8M-tdv4nYW7DUPyPtfLvs-dFkj4wMurb1VkKvYwQ/pub?output=csv'; // วางลิงก์ที่ได้จาก Google Sheets
+        
+        try {
+            const response = await fetch(url);
+            const data = await response.text();
+            
+            // แยกบรรทัดและดึงค่าจากช่อง C (Index ที่ 2)
+            const rows = data.split('\n');
+            const targetRow = rows[1]; // บรรทัดที่ 2 (ข้อมูลแถวแรกใต้อหัวตาราง)
+            const columns = targetRow.split(',');
+            
+            // ดึงค่า 67% ออกมา (ลบเครื่องหมาย % ออกถ้ามี เพื่อให้เป็นตัวเลข)
+            let rawValue = columns[2].replace('%', ''); 
+            let oeeData = parseFloat(rawValue);
+
+            // อัปเดตตัวเลขบนหน้าจอ
+            document.getElementById('oeeValue').innerText = oeeData;
+
+            // วาดหรืออัปเดตกราฟ
+            renderChart(oeeData);
+
+        } catch (error) {
+            console.error("ดึงข้อมูลไม่สำเร็จ:", error);
+        }
+    }
+
+    function renderChart(value) {
+        const ctx = document.getElementById('oeeChart').getContext('2d');
+        
+        if (myChart) { myChart.destroy(); } // ลบกราฟเก่าทิ้งก่อนวาดใหม่
+
+        myChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                datasets: [{
+                    data: [value, 100 - value],
+                    backgroundColor: ['#0dfb8f', '#1e252d'],
+                    borderWidth: 0,
+                    cutout: '85%',
+                    borderRadius: 20
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { enabled: false }
+                }
+            }
+        });
+    }
+
+    // สั่งให้ทำงานทันทีเมื่อโหลดหน้าเว็บ
+    updateDataFromSheet();
+    
+    // (ทางเลือก) สั่งให้อัปเดตข้อมูลอัตโนมัติทุกๆ 1 นาที
+    setInterval(updateDataFromSheet, 60000); 
+</script>
 
 
 
