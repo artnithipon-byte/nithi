@@ -87,80 +87,100 @@ body {
 </head>
 <body>
 
-    <div class="chart-container">
-        <h2>สรุปเปอร์เซ็นต์งาน</h2>
-        <div id="loading">กำลังโหลดข้อมูล...</div>
-        <canvas id="myPieChart" style="display:none;"></canvas>
-    </div>
 
-    <script>
-        // --- ส่วนที่คุณต้องแก้ไข ---
-        const sheetId = '<iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vTsx21fhnbVJwPM0v5aaBaNZN4VCEY79e82SYbb8M-tdv4nYW7DUPyPtfLvs-dFkj4wMurb1VkKvYwQ/pubhtml?widget=true&amp;headers=false"></iframe>'; // วาง ID ของไฟล์ Google Sheets ของคุณที่นี่
-        const sheetName = 'Sheet1';       // ชื่อแผ่นงาน (เช่น Sheet1 หรือ แผ่นงาน1)
-        const range = 'A1:B1';            // ช่วงข้อมูลที่คุณต้องการ (A1=OK, B1=Not OK)
-        // ---------------------------
 
-        const base = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${sheetName}&range=${range}`;
-
-        async function drawChart() {
-            try {
-                const response = await fetch(base);
-                const data = await response.text();
-                
-                // แปลงข้อมูล CSV เป็น Array
-                const rows = data.split('\n');
-                const values = rows[0].split(',').map(v => parseFloat(v.replace(/"/g, '')));
-
-                const okValue = values[0];
-                const notOkValue = values[1];
-
-                // ซ่อนข้อความโหลด แสดงกราฟ
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('myPieChart').style.display = 'block';
-
-                // สร้างกราฟวงกลม
-                const ctx = document.getElementById('myPieChart').getContext('2d');
-                new Chart(ctx, {
-                    type: 'pie', // หรือ 'doughnut' ถ้าชอบแบบมีรูตรงกลาง
-                    data: {
-                        labels: ['งาน OK', 'งานไม่โอเค'],
-                        datasets: [{
-                            data: [okValue, notOkValue],
-                            backgroundColor: ['#4472C4', '#ED7D31'], // สีน้ำเงินและส้มตาม Excel ของคุณ
-                            borderColor: '#fff',
-                            borderWidth: 2
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: { position: 'bottom' },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        let label = context.label || '';
-                                        if (label) label += ': ';
-                                        if (context.parsed !== null) {
-                                            let total = okValue + notOkValue;
-                                            let percentage = total > 0 ? Math.round((context.parsed / total) * 100) : 0;
-                                            label += context.parsed + ' (' + percentage + '%)';
-                                        }
-                                        return label;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-
-            } catch (error) {
-                console.error('Error fetching data:', error);
-                document.getElementById('loading').innerText = 'เกิดข้อผิดพลาดในการโหลดข้อมูล';
-            }
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Mini Graph</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* จำกัดขนาดตู้คอนเทนเนอร์ให้เล็กลง */
+        .chart-box {
+            width: 250px;  /* ปรับความกว้างที่นี่ */
+            margin: 20px auto;
+            text-align: center;
+            font-family: sans-serif;
         }
+        canvas {
+            max-width: 100%;
+            height: auto !important;
+        }
+        #status { font-size: 12px; color: #888; }
+    </style>
+</head>
+<body>
 
-        drawChart();
-    </script>
+<div class="chart-box">
+    <h4 id="title">กำลังโหลด...</h4>
+    <canvas id="myChart"></canvas>
+    <div id="status"></div>
+</div>
+
+<script>
+    // 1. ใส่ ID ของคุณตรงนี้ (เช็คให้ดีว่าก๊อปมาครบ)
+    const SHEET_ID = '<iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vTsx21fhnbVJwPM0v5aaBaNZN4VCEY79e82SYbb8M-tdv4nYW7DUPyPtfLvs-dFkj4wMurb1VkKvYwQ/pubhtml?widget=true&amp;headers=false"></iframe>'; 
+    const SHEET_NAME = 'Sheet1'; 
+    
+    // ลิงก์ดึงข้อมูลแบบ CSV
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${SHEET_NAME}&range=A1:B1`;
+
+    async function loadData() {
+        try {
+            const res = await fetch(url);
+            const text = await res.text();
+            
+            // ตัดเครื่องหมายคำพูดออกและแยกตัวเลข
+            const cleanData = text.replace(/"/g, '').split(',');
+            const ok = parseFloat(cleanData[0]);
+            const notOk = parseFloat(cleanData[1]);
+
+            if (isNaN(ok) || isNaN(notOk)) {
+                throw new Error("ข้อมูลใน Sheets ไม่ใช่ตัวเลข");
+            }
+
+            document.getElementById('title').innerText = "สรุปงาน";
+            renderChart(ok, notOk);
+
+        } catch (err) {
+            document.getElementById('title').innerText = "Error!";
+            document.getElementById('status').innerText = "ตรวจสอบ ID หรือการแชร์ไฟล์";
+            console.error(err);
+        }
+    }
+
+    function renderChart(val1, val2) {
+        const ctx = document.getElementById('myChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['OK', 'Not OK'],
+                datasets: [{
+                    data: [val1, val2],
+                    backgroundColor: ['#4472C4', '#ED7D31']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+    }
+
+    loadData();
+</script>
+
+</body>
+</html>
+
+
+
+
+
+    
 </body>
 </html>
 
