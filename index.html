@@ -132,13 +132,13 @@ body {
         try {
             const response = await fetch(sheetUrl);
             const data = await response.text();
-            let score = (result.oee * 100).toFixed(1);
+            
             // แยกข้อมูล: แถวที่ 1 (Index 0), คอลัมน์ที่ 3 (Index 2 คือช่อง C1)
             const rows = data.split('\n');
             const columns = rows[0].split(','); 
             let valC1 = columns[2].replace('%', '').trim();
             let score = parseFloat(valC1) || 0;
-
+           let score = (result.oee * 100).toFixed(1);
             // อัปเดตตัวเลขตรงกลาง
             document.getElementById('oeeValue').innerText = score;
 
