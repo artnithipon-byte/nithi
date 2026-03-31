@@ -88,90 +88,29 @@ body {
 <body>
 
 
+// 1. ใส่ ID จากในรูปของคุณ (ตัดมาจากระหว่าง /d/e/ และ /pubhtml)
+const SHEET_ID = '2PACX-1vTsx21fhnbVJwPM0v5aaBaNZN4VCEY79e82SYbb8M-tdv4nYW7DUPyPtfLvs-dFkj4wMurb1VkkvYwQ';
 
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Mini Graph</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        /* จำกัดขนาดตู้คอนเทนเนอร์ให้เล็กลง */
-        .chart-box {
-            width: 50px;  /* ปรับความกว้างที่นี่ */
-            margin: 20px auto;
-            text-align: center;
-            font-family: sans-serif;
-        }
-        canvas {
-            max-width: 10%;
-            height: auto !important;
-        }
-        #status { font-size: 12px; color: #888; }
-    </style>
-</head>
-<body>
+// 2. ลิงก์สำหรับดึงข้อมูล (ก๊อปอันนี้ไปวางได้เลยครับ ผมแก้ให้เป็นแบบ CSV แล้ว)
+const url = `https://docs.google.com/spreadsheets/d/e/${SHEET_ID}/pub?gid=0&single=true&output=csv`;
 
-<div class="chart-box">
-    <h4 id="title">กำลังโหลด...</h4>
-    <canvas id="myChart"></canvas>
-    <div id="status"></div>
-</div>
+async function loadData() {
+    try {
+        const res = await fetch(url);
+        const text = await res.text();
+        
+        // แยกข้อมูล (A1 คือตัวแรก, B1 คือตัวที่สอง)
+        const rows = text.split('\n');
+        const values = rows[0].split(','); 
 
-<script>
-    // 1. ใส่ ID ของคุณตรงนี้ (เช็คให้ดีว่าก๊อปมาครบ)
-    const SHEET_ID = '2PACX-1vTsx21fhnbVJwPM0v5aaBaNZN4VCEY79e82SYbb8M-tdv4nYW7DUPyPtfLvs-dFkj4wMurb1VkKvYwQ'; 
-    const SHEET_NAME = 'Sheet1'; 
-    
-    // ลิงก์ดึงข้อมูลแบบ CSV
-    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${SHEET_NAME}&range=A1:B1`;
+        const ok = parseFloat(values[0]); // ข้อมูลช่อง A1
+        const notOk = parseFloat(values[1]); // ข้อมูลช่อง B1
 
-    async function loadData() {
-        try {
-            const res = await fetch(url);
-            const text = await res.text();
-            
-            // ตัดเครื่องหมายคำพูดออกและแยกตัวเลข
-            const cleanData = text.replace(/"/g, '').split(',');
-            const ok = parseFloat(cleanData[0]);
-            const notOk = parseFloat(cleanData[1]);
-
-            if (isNaN(ok) || isNaN(notOk)) {
-                throw new Error("ข้อมูลใน Sheets ไม่ใช่ตัวเลข");
-            }
-
-            document.getElementById('title').innerText = "สรุปงาน";
-            renderChart(ok, notOk);
-
-        } catch (err) {
-            document.getElementById('title').innerText = "Error!";
-            document.getElementById('status').innerText = "ตรวจสอบ ID หรือการแชร์ไฟล์";
-            console.error(err);
-        }
+        renderChart(ok, notOk);
+    } catch (err) {
+        console.error("เชื่อมต่อข้อมูลไม่ได้:", err);
     }
-
-    function renderChart(val1, val2) {
-        const ctx = document.getElementById('myChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'pie',
-            data: {
-                labels: ['OK', 'Not OK'],
-                datasets: [{
-                    data: [val1, val2],
-                    backgroundColor: ['#4472C4', '#ED7D31']
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { position: 'bottom' }
-                }
-            }
-        });
-    }
-
-    loadData();
-</script>
+}
 
 
 
