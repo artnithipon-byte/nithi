@@ -69,57 +69,108 @@ body {
 
 
 
-<div style="width: 200px; height: 200px;margin-left:400px;margin-top:-1700px;">
-    
-    <canvas id="myPieChart"></canvas>
+<div class="oee-card" style="float: right;"> <div class="chart-container">
+        <canvas id="oeeChart"></canvas>
+        <div class="center-label">
+            <span id="oeeValue">0</span>
+            <div class="unit">%</div>
+        </div>
+    </div>
+    <div class="footer-text">OVERALL OEE</div>
 </div>
 
+<style>
+    .oee-card {
+        background-color: #0b1318;
+        border: 1px solid #1a2a35;
+        border-radius: 15px;
+        padding: 25px;
+        width: 280px;
+        text-align: center;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .chart-container {
+        position: relative;
+        width: 200px;
+        height: 200px;
+        margin: 0 auto;
+    }
+    .center-label {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+    }
+    #oeeValue {
+        font-size: 48px;
+        font-weight: bold;
+        color: #0dfb8f;
+        text-shadow: 0 0 10px rgba(13, 251, 143, 0.5);
+    }
+    .unit {
+        color: #0dfb8f;
+        font-size: 14px;
+        opacity: 0.8;
+    }
+    .footer-text {
+        color: #7a868f;
+        margin-top: 20px;
+        letter-spacing: 2px;
+        font-size: 14px;
+    }
+</style>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <script>
-    async function drawChart() {
-        // วางลิงก์ CSV ที่ได้จาก Google Sheets ตรงนี้
-        const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTsx21fhnbVJwPM0v5aaBaNZN4VCEY79e82SYbb8M-tdv4nYW7DUPyPtfLvs-dFkj4wMurb1VkKvYwQ/pub?output=csv';
-        
-        const response = await fetch(url);
-        const data = await response.text();
-        
-        // แยกข้อมูล (ตัดบรรทัดและแยกด้วย comma)
-        const rows = data.split('\n');
-        // สมมติบรรทัดแรก (A1, B1, C1) คือตัวเลข 70, 10, 88 ตามรูปของคุณ
-        const values = rows[0].split(',').map(Number); 
-        const labels = ['OK', 'NG', 'Point C'];
+    let myChart;
+    const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTsx21fhnbVJwPM0v5aaBaNZN4VCEY79e82SYbb8M-tdv4nYW7DUPyPtfLvs-dFkj4wMurb1VkKvYwQ/pub?output=csv'; // <<< วางลิงก์ CSV ตรงนี้
 
-        const ctx = document.getElementById('myPieChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'pie',
-            data: {
-                labels: labels,
-                datasets: [{
-                    data: values,
-                    backgroundColor: ['#28a745', '#dc3545', '#17a2b8'] // สีเขียว แดง ฟ้า ตามรูปใน Sheet
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: { display: false } // ปิดคำอธิบายเพื่อความประหยัดพื้นที่
-                }
+    async function updateGauge() {
+        try {
+            const response = await fetch(sheetUrl);
+            const data = await response.text();
+            
+            // แยกข้อมูล: แถวที่ 1 (Index 0), คอลัมน์ที่ 3 (Index 2 คือช่อง C1)
+            const rows = data.split('\n');
+            const columns = rows[0].split(','); 
+            let valC1 = columns[2].replace('%', '').trim();
+            let score = parseFloat(valC1) || 0;
+
+            // อัปเดตตัวเลขตรงกลาง
+            document.getElementById('oeeValue').innerText = score;
+
+            // วาดหรืออัปเดตกราฟ
+            if (!myChart) {
+                const ctx = document.getElementById('oeeChart').getContext('2d');
+                myChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        datasets: [{
+                            data: [score, 100 - score],
+                            backgroundColor: ['#0dfb8f', '#1e252d'],
+                            borderWidth: 0,
+                            cutout: '88%',
+                            borderRadius: 10
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false }, tooltip: { enabled: false } }
+                    }
+                });
+            } else {
+                myChart.data.datasets[0].data = [score, 100 - score];
+                myChart.update();
             }
-        });
+        } catch (err) {
+            console.error("เชื่อมต่อข้อมูล Excel ไม่ได้:", err);
+        }
     }
 
-    drawChart();
-
-
-    document.getElementById(OEE).innerText=newValue;
-
-myChart.update();
-}
-setInterval(refreshChartData, 4000);
-
-    
+    // ทำงานทันทีเมื่อโหลดหน้า และทำซ้ำทุก 10 วินาที
+    updateGauge();
+    setInterval(updateGauge, 10000); 
 </script>
 
 
