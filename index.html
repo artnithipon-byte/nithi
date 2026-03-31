@@ -72,7 +72,24 @@ body {
 
 
 
+// เปลี่ยน SHEET_ID และ SHEET_NAME ให้เป็นของคุณ
+const sheetId = '<iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vTsx21fhnbVJwPM0v5aaBaNZN4VCEY79e82SYbb8M-tdv4nYW7DUPyPtfLvs-dFkj4wMurb1VkKvYwQ/pubhtml?widget=true&amp;headers=false"></iframe>';
+const base = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=Sheet1`;
 
+async function fetchSheetData() {
+    const response = await fetch(base);
+    const data = await response.text();
+    
+    // แปลงข้อมูล CSV (สมมติว่าค่า % อยู่ที่แถว 1 คอลัมน์ 3 หรือ C1)
+    const rows = data.split('\n');
+    const firstRow = rows[1].split(','); // rows[1] คือข้อมูลแถวแรก (ไม่รวมหัวตาราง)
+    const percentValue = firstRow[2].replace(/"/g, ''); // ดึงค่าจากคอลัมน์ C
+
+    // แสดงผลบนหน้าเว็บ
+    document.getElementById('webPercent').innerText = percentValue;
+}
+
+fetchSheetData();
 
 
 
