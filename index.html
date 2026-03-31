@@ -113,18 +113,11 @@ body {
     drawChart();
 
 
+    ;
 
-    // อัปเดตตัวเลขตรงกลาง
-    document.getElementById('OEEValue').innerText = newValue;
 
-    
-    // สั่งให้กราฟขยับไปยังค่าใหม่ (Smooth Update)
-    myChart.update();
 }
-
-// ส่วนที่ 2: ตั้งเวลาให้ทำงานเอง (หน่วยเป็นมิลลิวินาที)
-// 5000 = 5 วินาที, 1000 = 1 นาที
-setInterval(refreshChartData, 1000);
+setInterval(refreshChartData, 4000);
 
     
 </script>
