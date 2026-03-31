@@ -75,7 +75,7 @@ body {
 
         async function fetchData() {
             // 1. วาง URL ของ Google Sheets (แบบ CSV) ที่นี่
-            const sheetUrl = '<iframe width="455" height="280" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vTsx21fhnbVJwPM0v5aaBaNZN4VCEY79e82SYbb8M-tdv4nYW7DUPyPtfLvs-dFkj4wMurb1VkKvYwQ/pubchart?oid=1478743181&amp;format=interactive"></iframe>'; 
+            const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTsx21fhnbVJwPM0v5aaBaNZN4VCEY79e82SYbb8M-tdv4nYW7DUPyPtfLvs-dFkj4wMurb1VkKvYwQ/pubhtml'; 
 
             try {
                 const response = await fetch(sheetUrl);
