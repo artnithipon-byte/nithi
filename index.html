@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
 body {
     font-family:agency fb, sans-serif;
@@ -68,57 +69,48 @@ body {
 
 
 
-<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-    <script type="text/javascript">
-        google.charts.load('current', {'packages':['corechart']});
-        google.charts.setOnLoadCallback(fetchData);
+<div style="width: 200px; height: 200px;">
+    <canvas id="myPieChart"></canvas>
+</div>
 
-        async function fetchData() {
-            // 1. วาง URL ของ Google Sheets (แบบ CSV) ที่นี่
-            const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTsx21fhnbVJwPM0v5aaBaNZN4VCEY79e82SYbb8M-tdv4nYW7DUPyPtfLvs-dFkj4wMurb1VkKvYwQ/pubhtml'; 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-            try {
-                const response = await fetch(sheetUrl);
-                const text = await response.text();
-                const rows = text.split('\n');
-                
-                // 2. ดึงข้อมูลจากแถวที่ 1 (ในรูปคือ A1=70, B1=10)
-                const dataRow = rows[0].split(',');
-                const valA = parseFloat(dataRow[0]); // 70
-                const valB = parseFloat(dataRow[1]); // 10
-                const valC = 100 - (valA + valB);    // ส่วนที่เหลือเพื่อให้เต็มวง
+<script>
+    async function drawChart() {
+        // วางลิงก์ CSV ที่ได้จาก Google Sheets ตรงนี้
+        const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTsx21fhnbVJwPM0v5aaBaNZN4VCEY79e82SYbb8M-tdv4nYW7DUPyPtfLvs-dFkj4wMurb1VkKvYwQ/pub?output=csv';
+        
+        const response = await fetch(url);
+        const data = await response.text();
+        
+        // แยกข้อมูล (ตัดบรรทัดและแยกด้วย comma)
+        const rows = data.split('\n');
+        // สมมติบรรทัดแรก (A1, B1, C1) คือตัวเลข 70, 10, 88 ตามรูปของคุณ
+        const values = rows[0].split(',').map(Number); 
+        const labels = ['Point A', 'Point B', 'Point C'];
 
-                drawChart(valA, valB, valC);
-            } catch (error) {
-                console.error("Error fetching data:", error);
+        const ctx = document.getElementById('myPieChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: ['#28a745', '#dc3545', '#17a2b8'] // สีเขียว แดง ฟ้า ตามรูปใน Sheet
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false } // ปิดคำอธิบายเพื่อความประหยัดพื้นที่
+                }
             }
-        }
+        });
+    }
 
-        function drawChart(a, b, c) {
-            var data = google.visualization.arrayToDataTable([
-                ['Category', 'Value'],
-                ['ข้อมูล A', a],
-                ['ข้อมูล B', b],
-                ['อื่นๆ', c]
-            ]);
-
-            var options = {
-                title: 'สรุปผลขนาดเล็ก',
-                pieHole: 0.4, // เป็นกราฟโดนัทเพื่อให้ดูทันสมัย
-                width: 300,   // กำหนดความกว้างเล็กๆ
-                height: 200,  // กำหนดความสูง
-                legend: { position: 'right' }, // เอาคำอธิบายไว้ด้านข้าง
-                colors: ['#0F9D58', '#DB4437', '#4285F4'], // สี เขียว, แดง, ฟ้า ตามรูปคุณ
-                chartArea: { width: '90%', height: '80%' }
-            };
-
-            var chart = new google.visualization.PieChart(document.getElementById('small_chart'));
-            chart.draw(data, options);
-        }
-    </script>
-</head>
-<body>
-    <div id="small_chart" style="border: 1px solid #eee; border-radius: 10px; width: 310px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);"></div>
+    drawChart();
+</script>
 
 
 
